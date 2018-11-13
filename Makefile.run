@@ -1,0 +1,104 @@
+## Run Makefile
+include ./project.mk
+
+
+## Short Node names
+.for NODE in ${NODES}
+SNODES+= ${NODE:C/@/ /:[1]}
+.endfor
+
+REV_SNODES = $(SNODES:O:[1..-1])
+
+
+STARTS = $(SNODES:=_start)
+SS = $(SNODES:=_s)
+STOPS = $(SNODES:=_stop)
+SP = $(SNODES:=_p)
+ATTACHES = $(SNODES:=_attach)
+AS = $(SNODES:=_a)
+CONSOLES = $(SNODES:=_console)
+
+
+
+
+all:
+	echo "make list|stop|start|etc..."
+
+
+f: frestart
+
+l:
+	@echo $(NODES:O:[-1..1])
+ls:
+	@echo $(SNODES:O:[-1..1])
+
+
+
+##############################################################
+## Start Stop Attach Console
+##############################################################
+
+$(STARTS):
+	@echo ${NODES:M$(@:_start=)@*} start;
+	@RELX_REPLACE_OS_VARS=true \
+	NODE_NAME=${NODES:M$(@:_start=)@*} \
+	PIPE_DIR=~/tmp/erlang-pipe-dir_$(@:_start=) \
+	./bin/$(PROJECT) start
+
+## Starts
+$(SS):
+	@echo ${NODES:M$(@:_s=)@*} start;
+	@RELX_REPLACE_OS_VARS=true \
+	NODE_NAME=${NODES:M$(@:_s=)@*} \
+	PIPE_DIR=~/tmp/erlang-pipe-dir_$(@:_s=) \
+	./bin/$(PROJECT) start
+
+
+$(STOPS):
+	RELX_REPLACE_OS_VARS=true \
+	NODE_NAME=${NODES:M$(@:_stop=)@*} \
+	PIPE_DIR=~/tmp/erlang-pipe-dir_$(@:_stop=) \
+	./bin/$(PROJECT) stop
+
+## Stops
+$(SP):
+	RELX_REPLACE_OS_VARS=true \
+	NODE_NAME=${NODES:M$(@:_p=)@*} \
+	PIPE_DIR=~/tmp/erlang-pipe-dir_$(@:_p=) \
+	./bin/$(PROJECT) stop
+
+
+$(ATTACHES):
+	RELX_REPLACE_OS_VARS=true \
+	NODE_NAME=${NODES:M$(@:_attach=)@*} \
+	PIPE_DIR=~/tmp/erlang-pipe-dir_$(@:_attach=) \
+	./bin/$(PROJECT) attach
+
+
+## Attach bu node_a
+$(AS):
+	RELX_REPLACE_OS_VARS=true \
+	NODE_NAME=${NODES:M$(@:_a=)@*} \
+	PIPE_DIR=~/tmp/erlang-pipe-dir_$(@:_a=) \
+	./bin/$(PROJECT) attach
+
+
+$(CONSOLES):
+	RELX_REPLACE_OS_VARS=true \
+	NODE_NAME=${NODES:M$(@:_console=)@*} \
+	PIPE_DIR=~/tmp/erlang-pipe-dir_$(@:_console=) \
+	./bin/$(PROJECT) console
+
+
+fstart:
+	-@for i in $(SNODES); do \
+		make $$i\_start; \
+		sleep 1; \
+	done
+
+fstop:
+	-@for NODE in $(REV_SNODES); do \
+		make $${NODE}\_stop; \
+	done
+
+frestart: fstop fstart
